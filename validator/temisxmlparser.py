@@ -2,11 +2,10 @@
 # __Script used to extract classification annotations from the xml files
 # produced by the Luxid workflow.__
 #
-
+import sys
 import os
 import ConfigParser
-#import xml.etree.cElementTree
-from lxml import etree
+import xml.etree.cElementTree as etree
 
 ##  Read the xml file, extract the file name and the annotations
 # and append this information to the csv file of the corresponding
@@ -17,36 +16,40 @@ from lxml import etree
 def convert_classif_xml_to_csv(output_folder, xmlfile):
     tree = etree.ElementTree(file=os.path.join(output_folder, xmlfile))
     enrichment = tree.getroot()
-    # Loop over xml structure
-    for annotation in enrichment:
-        long_filename = annotation.attrib["file"].split('\\')
-        filename = long_filename[len(long_filename) - 1]
-        corpus = long_filename[len(long_filename) - 3]
-        print "corpus: " + corpus
-        #Debug Code
-        #        if corpus != "_Agriculture_food_and_fisheries":
-        #            return
-        #End Debug
-        doctype = long_filename[len(long_filename) - 2]
-        print "doctype: " + doctype
-        filename = filename[0:len(filename) - 1:1]
-        print "filename: " + filename
-        # Append results to csv file
-        # Create folder if not yet created
-        if not os.path.isdir(os.path.join(output_folder, corpus)):
-            os.mkdir(os.path.join(output_folder, corpus))
-        # Open csv file in append mode. (File created on first access)
-        with open(os.path.join(output_folder, corpus,
-                               "Annotations.csv"), 'ab') as csv_annotations:
-            if annotation.tag == "annotation":
-                for node in annotation:
-                    csv_annotations.write(
-                        "{filename}{sep}{uri}{sep}{text}{end}".format(
-                            sep='|',
-                            filename=filename,
-                            uri=node.attrib["uri"].encode("utf-8"),
-                            text=node.text.encode("utf-8"),
-                            end=u"\n"))
+    docIDNode = enrichment.find("docID")
+    print docIDNode.attrib["value"]
+    long_filename = docIDNode.attrib["value"].split('/')
+    print "long_filename: ", long_filename
+    filename = long_filename[-1]
+    doctype = long_filename[-2]
+    print "doctype: " + doctype
+    print "filename: " + filename
+    corpus = long_filename[0]
+    print "corpus: " + corpus
+    #Debug Code
+    #if corpus != "_Agriculture_food_and_fisheries":
+    #    return
+    #End Debug
+
+    # Append results to csv file
+    # Create folder if not yet created
+    if not os.path.isdir(os.path.join(output_folder, corpus)):
+        os.mkdir(os.path.join(output_folder, corpus))
+
+    # Open csv file in append mode. (File created on first access)
+    with open(os.path.join(output_folder, corpus,
+                           "Annotations.csv"), 'ab') as csv_annotations:
+        # Loop over xml structure
+        for annotation in enrichment:
+            if annotation.tag in ["annotation", "docID", "language"]:
+                continue
+            csv_annotations.write(
+                "{filename}{sep}{uri}{sep}{text}{end}".format(
+                    sep='|',
+                    filename=filename,
+                    uri=annotation.attrib["uri"].encode("utf-8"),
+                    text=annotation.text.encode("utf-8"),
+                    end=u"\n"))
 
 
 ## __Runs the extraction of the classification's annotations__

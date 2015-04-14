@@ -296,7 +296,7 @@ class ExcelGenerator(object):
                                     row_index, column_index,
                                     previous_values[column_index])
                             elif cell_value:
-                                print row_index, column_index, cell_value
+                                #print row_index, column_index, cell_value
                                 sheet_annotations.write(
                                     row_index, column_index,
                                     int(cell_value), newvalue_style)
